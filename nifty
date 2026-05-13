@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Nifty Options Signal Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #0a0f1e;
+            font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
+            color: #f0f3fa;
+            padding: 20px;
+        }
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .card {
+            background: #131b2f;
+            border-radius: 28px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+            backdrop-filter: blur(2px);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 35px rgba(0,0,0,0.4);
+        }
+        h1 {
+            font-size: 1.9rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #a5f3fc, #4f9fff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+            margin-bottom: 8px;
+        }
+        .sub {
+            color: #8e9aaf;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            border-left: 3px solid #2d6a4f;
+            padding-left: 12px;
+        }
+        .signal-badge {
+            text-align: center;
+            padding: 25px;
+            background: #071a2b;
+            border-radius: 60px;
+            margin: 20px 0;
+        }
+        .signal {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: 3px;
+            display: inline-block;
+            padding: 12px 36px;
+            border-radius: 60px;
+            background: #1f2a3e;
+            transition: all 0.2s;
+        }
+        .signal.BULLISH {
+            background: #00c853;
+            color: #000;
+            box-shadow: 0 0 15px #00c853aa;
+        }
+        .signal.BEARISH {
+            background: #ff3b30;
+            color: #fff;
+            box-shadow: 0 0 15px #ff3b30aa;
+        }
+        .signal.NEUTRAL {
+            background: #ffa000;
+            color: #000;
+            box-shadow: 0 0 15px #ffa000aa;
+        }
+        .signal.WAITING {
+            background: #5a626e;
+            color: #fff;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 18px;
+            margin: 30px 0;
+        }
+        .metric-card {
+            background: #0f1622;
+            border-radius: 20px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid #23304b;
+        }
+        .metric-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #8e9aaf;
+            margin-bottom: 10px;
+        }
+        .metric-value {
+            font-size: 1.9rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+        .panel {
+            background: #0f1622;
+            border-radius: 26px;
+            padding: 20px;
+        }
+        .panel h3 {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            border-left: 4px solid #2d6a4f;
+            padding-left: 12px;
+        }
+        .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #1f2a3e;
+        }
+        .row .label {
+            font-weight: 400;
+            color: #9aa8c0;
+        }
+        .row .value {
+            font-weight: 600;
+            font-family: monospace;
+            font-size: 1rem;
+        }
+        .timestamp {
+            text-align: right;
+            font-size: 0.75rem;
+            color: #6c7a93;
+            margin-top: 25px;
+        }
+        .buy { color: #00e676; }
+        .sell { color: #ff5e4a; }
+        .exit { color: #ffb347; }
+        @media (max-width: 780px) {
+            .two-col { grid-template-columns: 1fr; }
+            .metric-value { font-size: 1.4rem; }
+            .signal { font-size: 1.8rem; padding: 8px 20px; }
+        }
+        footer {
+            text-align: center;
+            font-size: 0.7rem;
+            margin-top: 30px;
+            color: #4a5b7a;
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <div class="card">
+        <h1>⚡ NIFTY OPTIONS SIGNAL ENGINE</h1>
+        <div class="sub">Real-time institutional analytics | Powered by Dhan & Render</div>
+        <div class="signal-badge">
+            <span id="signalText" class="signal WAITING">CONNECTING...</span>
+        </div>
+
+        <div class="grid-3" id="mainMetrics"></div>
+
+        <div class="two-col">
+            <div class="panel" id="marketPanel">
+                <h3>📈 MARKET STATE</h3>
+                <div id="marketData">Loading...</div>
+            </div>
+            <div class="panel" id="instiPanel">
+                <h3>🏛️ INSTITUTIONAL INSIGHTS</h3>
+                <div id="instiData">Loading...</div>
+            </div>
+        </div>
+        <div class="timestamp" id="timestamp"></div>
+    </div>
+    <footer>Auto-refresh every 3s • Data from NSE & Dhan WebSocket</footer>
+</div>
+
+<script>
+    // ================================
+    // YOUR RENDER BACKEND URL
+    // ================================
+    const API_URL = 'https://nifty-breadth-dashboard-nn34.onrender.com/';
+
+    async function fetchSignals() {
+        try {
+            const response = await fetch(API_URL);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            updateUI(data);
+        } catch (err) {
+            console.error('Fetch error:', err);
+            document.getElementById('signalText').innerText = '⚠️ CONNECTION ERROR';
+            document.getElementById('signalText').className = 'signal WAITING';
+        }
+    }
+
+    function updateUI(data) {
+        const latest = data.data || {};
+        const market = data.market || {};
+        const institutional = data.institutional || {};
+
+        // ---- Signal Badge ----
+        const signal = latest.signal || 'WAITING';
+        const signalEl = document.getElementById('signalText');
+        signalEl.innerText = `SIGNAL: ${signal}`;
+        signalEl.className = 'signal ' + (signal === 'BULLISH' ? 'BULLISH' : (signal === 'BEARISH' ? 'BEARISH' : (signal === 'NEUTRAL' ? 'NEUTRAL' : 'WAITING')));
+
+        // ---- Main metrics grid (CE, PE, Spread, RSI, MACD, PCR) ----
+        const metricsHtml = `
+            <div class="metric-card"><div class="metric-label">CE PRICE</div><div class="metric-value">₹ ${(latest.ce_price || 0).toFixed(2)}</div></div>
+            <div class="metric-card"><div class="metric-label">PE PRICE</div><div class="metric-value">₹ ${(latest.pe_price || 0).toFixed(2)}</div></div>
+            <div class="metric-card"><div class="metric-label">SPREAD</div><div class="metric-value">${(latest.spread || 0).toFixed(2)}</div></div>
+            <div class="metric-card"><div class="metric-label">RSI</div><div class="metric-value">${(latest.rsi || 50).toFixed(1)}</div></div>
+            <div class="metric-card"><div class="metric-label">MACD</div><div class="metric-value">${(latest.macd || 0).toFixed(2)}</div></div>
+            <div class="metric-card"><div class="metric-label">PCR</div><div class="metric-value">${(latest.pcr || 1.0).toFixed(2)}</div></div>
+        `;
+        document.getElementById('mainMetrics').innerHTML = metricsHtml;
+
+        // ---- Market Panel ----
+        const marketHtml = `
+            <div class="row"><span class="label">Action</span><span class="value ${market.action === 'BUY CE' || market.action === 'STRONG BUY CE' ? 'buy' : (market.action === 'EXIT' ? 'exit' : '')}">${market.action || 'HOLD'}</span></div>
+            <div class="row"><span class="label">Confidence</span><span class="value">${market.confidence || 0}%</span></div>
+            <div class="row"><span class="label">Strength</span><span class="value">${market.strength || 'LOW'}</span></div>
+            <div class="row"><span class="label">Momentum</span><span class="value">${market.momentum || 'NEUTRAL'}</span></div>
+            <div class="row"><span class="label">Trend</span><span class="value">${market.trend || 'SIDEWAYS'}</span></div>
+            <div class="row"><span class="label">Volatility</span><span class="value">${market.volatility || 'NORMAL'}</span></div>
+            <div class="row"><span class="label">Alert</span><span class="value ${market.alert === 'BUY' ? 'buy' : (market.alert === 'EXIT' ? 'exit' : '')}">${market.alert || 'NONE'}</span></div>
+            <div class="row"><span class="label">RSI (market)</span><span class="value">${market.rsi || 50}</span></div>
+        `;
+        document.getElementById('marketData').innerHTML = marketHtml;
+
+        // ---- Institutional Panel (all advanced params) ----
+        const instiHtml = `
+            <div class="row"><span class="label">Institutional Signal</span><span class="value ${institutional.institutional_signal === 'STRONG BUY CE' ? 'buy' : (institutional.institutional_signal === 'EXIT' ? 'exit' : '')}">${institutional.institutional_signal || 'HOLD'}</span></div>
+            <div class="row"><span class="label">Insti Confidence</span><span class="value">${institutional.institutional_confidence || 0}%</span></div>
+            <div class="row"><span class="label">VWAP</span><span class="value">${(institutional.vwap || 0).toFixed(2)}</span></div>
+            <div class="row"><span class="label">EMA (9 / 21)</span><span class="value">${(institutional.ema_fast || 0).toFixed(2)} / ${(institutional.ema_slow || 0).toFixed(2)}</span></div>
+            <div class="row"><span class="label">EMA Signal</span><span class="value">${institutional.ema_signal || 'NEUTRAL'}</span></div>
+            <div class="row"><span class="label">ATR</span><span class="value">${(institutional.atr || 0).toFixed(2)}</span></div>
+            <div class="row"><span class="label">OI Buildup</span><span class="value">${institutional.oi_buildup || 'NEUTRAL'}</span></div>
+            <div class="row"><span class="label">IV State</span><span class="value">${institutional.iv_state || 'NORMAL'}</span></div>
+            <div class="row"><span class="label">Candle Structure</span><span class="value">${institutional.candle_structure || 'SIDEWAYS'}</span></div>
+            <div class="row"><span class="label">Market Breadth</span><span class="value">${institutional.market_breadth || 'BALANCED'}</span></div>
+            <div class="row"><span class="label">Volume Profile</span><span class="value">${institutional.volume_profile || 'NORMAL'}</span></div>
+            <div class="row"><span class="label">Smart Money Flow</span><span class="value">${institutional.smart_money_flow || 'NEUTRAL'}</span></div>
+            <div class="row"><span class="label">Δ / Γ / Θ / ν</span><span class="value">${institutional.delta || 0} / ${institutional.gamma || 0} / ${institutional.theta || 0} / ${institutional.vega || 0}</span></div>
+        `;
+        document.getElementById('instiData').innerHTML = instiHtml;
+
+        // ---- Timestamp ----
+        document.getElementById('timestamp').innerHTML = `🕒 Last update: ${latest.timestamp || '—'}`;
+    }
+
+    // Refresh every 3 seconds
+    setInterval(fetchSignals, 3000);
+    fetchSignals();
+</script>
+</body>
+</html>
